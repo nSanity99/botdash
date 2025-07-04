@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Log</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5; }
+        pre { background: #222; color: #eee; padding: 20px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Log del Server</h1>
+    <pre id="logContent">Caricamento...</pre>
+    <script>
+        fetch('/api/logs', { credentials: 'include' })
+            .then(r => r.text())
+            .then(text => { document.getElementById('logContent').textContent = text; })
+            .catch(() => { document.getElementById('logContent').textContent = 'Errore nel caricamento dei log'; });
+    </script>
+</body>
+</html>
