@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Statistiche</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <h1>Statistiche Bot</h1>
+    <div id="stats">Caricamento...</div>
+    <script>
+        fetch('/api/stats', { credentials: 'include' })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('stats').textContent = `Bot totali: ${data.totalBots} - In esecuzione: ${data.runningBots}`;
+            })
+            .catch(() => { document.getElementById('stats').textContent = 'Errore nel caricamento delle statistiche'; });
+    </script>
+</body>
+</html>
