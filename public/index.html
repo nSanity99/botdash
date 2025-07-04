@@ -15,6 +15,18 @@
             padding: 0;
             color: #333;
         }
+        body.dark {
+            background-color: #121212;
+            color: #eee;
+        }
+        body.dark .container {
+            background-color: #1e1e1e;
+            border-color: #333;
+        }
+        body.dark .bot-item {
+            background-color: #1e1e1e;
+            border-color: #333;
+        }
         .header {
             text-align: center;
             padding: 40px 0;
@@ -139,6 +151,13 @@
         }
         .restart-button:hover {
             background-color: #fb8c00;
+        }
+        .stop-button {
+            background-color: #e53935;
+            border-color: #e53935;
+        }
+        .stop-button:hover {
+            background-color: #d32f2f;
         }
         .logout-button {
             padding: 12px 20px;
@@ -353,6 +372,7 @@
     <!-- Header con il Titolo -->
     <div class="header">
         <h1>nSanity &amp; Chapo Bot Service</h1>
+        <button id="themeToggle" style="margin-top:10px;">Tema</button>
     </div>
 
     <div class="container">
@@ -414,6 +434,7 @@
             <ul class="bot-list" id="botList">
                 <!-- Lista dei bot verrà popolata dinamicamente -->
             </ul>
+            <p><a href="/logs">Log</a> | <a href="/stats">Statistiche</a></p>
             <button class="logout-button" id="logoutButton">Logout</button>
         </div>
     </div>
@@ -610,6 +631,7 @@
                     botActions.classList.add('bot-actions');
 
                     const startButton = document.createElement('button');
+                    const stopButton = document.createElement('button');
 
                     // Trova lo stato del bot
                     const botStatusObj = statuses.find(s => s.botName === bot);
@@ -631,7 +653,12 @@
                         }
                     });
 
+                    stopButton.textContent = 'Stop Bot';
+                    stopButton.classList.add('stop-button');
+                    stopButton.addEventListener('click', () => stopBot(bot));
+
                     botActions.appendChild(startButton);
+                    botActions.appendChild(stopButton);
 
                     botHeader.appendChild(botName);
                     botHeader.appendChild(botActions);
@@ -730,7 +757,7 @@
 
                 // Aggiorna il pulsante in base allo stato
                 const botItem = statusDiv.closest('.bot-item');
-                const startButton = botItem.querySelector('.bot-actions button');
+                const startButton = botItem.querySelector('.bot-actions .start-button, .bot-actions .restart-button');
                 if (status.toLowerCase() === 'in esecuzione') {
                     startButton.textContent = 'Riavvia Bot';
                     startButton.classList.remove('start-button');
@@ -805,6 +832,31 @@
             });
         }
 
+        // Funzione per fermare il bot
+        function stopBot(bot) {
+            if (!confirm(`Fermare il bot ${bot}?`)) return;
+            fetch('/api/stop-bot', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: bot, category: currentCategory }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                } else if (data.error) {
+                    alert(`Errore: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                console.error(`Errore nello stop del bot ${bot}:`, error);
+                alert('Errore nello stop del bot');
+            });
+        }
+
         // Funzione per inviare comandi al bot
         function sendCommand(bot) {
             const commandField = document.getElementById(`command-${bot}-${currentCategory}`);
@@ -843,6 +895,16 @@
                     showLoginContainer();
                 });
         };
+
+        // Gestione tema
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        });
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark');
+        }
     </script>
 </body>
 </html>
