@@ -15,6 +15,18 @@
             padding: 0;
             color: #333;
         }
+        body.dark {
+            background-color: #121212;
+            color: #eee;
+        }
+        body.dark .container {
+            background-color: #1e1e1e;
+            border-color: #333;
+        }
+        body.dark .bot-item {
+            background-color: #1e1e1e;
+            border-color: #333;
+        }
         .header {
             text-align: center;
             padding: 40px 0;
@@ -140,6 +152,13 @@
         .restart-button:hover {
             background-color: #fb8c00;
         }
+        .stop-button {
+            background-color: #e53935;
+            border-color: #e53935;
+        }
+        .stop-button:hover {
+            background-color: #d32f2f;
+        }
         .logout-button {
             padding: 12px 20px;
             cursor: pointer;
@@ -204,6 +223,23 @@
         button[type="submit"]:hover, button:hover {
             background-color: #1976d2;
             transform: translateY(-2px);
+        }
+        /* Stili per il dashboard */
+        #dashboardContainer {
+            text-align: center;
+        }
+        #dashboardContainer canvas {
+            max-width: 300px;
+            margin: 20px auto;
+        }
+        #dashboardContainer .nav-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        #dashboardContainer .nav-buttons button {
+            width: auto;
         }
         .toggle-link {
             color: #2196f3;
@@ -348,11 +384,13 @@
             }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <!-- Header con il Titolo -->
     <div class="header">
         <h1>nSanity &amp; Chapo Bot Service</h1>
+        <button id="themeToggle" style="margin-top:10px;">Tema</button>
     </div>
 
     <div class="container">
@@ -397,6 +435,18 @@
             <div id="registerSuccess" class="success-message"></div>
         </div>
 
+        <!-- Dashboard -->
+        <div id="dashboardContainer" class="hidden">
+            <h1>Dashboard</h1>
+            <canvas id="statusChart"></canvas>
+            <div class="nav-buttons">
+                <button id="goManage">Gestione Bot</button>
+                <button id="goLogs">Log</button>
+                <button id="goStats">Statistiche</button>
+            </div>
+            <button class="logout-button" id="dashLogout">Logout</button>
+        </div>
+
         <!-- Sezione dei Bot -->
         <div id="botContainer" class="hidden">
             <h1>Gestione dei Bot</h1>
@@ -414,6 +464,7 @@
             <ul class="bot-list" id="botList">
                 <!-- Lista dei bot verrà popolata dinamicamente -->
             </ul>
+            <p><a href="/logs">Log</a> | <a href="/stats">Statistiche</a></p>
             <button class="logout-button" id="logoutButton">Logout</button>
         </div>
     </div>
@@ -424,6 +475,11 @@
         const loginContainer = document.getElementById('loginContainer');
         const registerContainer = document.getElementById('registerContainer');
         const botContainer = document.getElementById('botContainer');
+        const dashboardContainer = document.getElementById('dashboardContainer');
+        const goManage = document.getElementById('goManage');
+        const goLogs = document.getElementById('goLogs');
+        const goStats = document.getElementById('goStats');
+        const dashLogout = document.getElementById('dashLogout');
 
         const loginForm = document.getElementById('loginForm');
         const registerForm = document.getElementById('registerForm');
@@ -449,6 +505,7 @@
             loginContainer.classList.remove('hidden');
             registerContainer.classList.add('hidden');
             botContainer.classList.add('hidden');
+            dashboardContainer.classList.add('hidden');
             loginError.textContent = '';
             registerError.textContent = '';
             registerSuccess.textContent = '';
@@ -458,6 +515,7 @@
             loginContainer.classList.add('hidden');
             registerContainer.classList.remove('hidden');
             botContainer.classList.add('hidden');
+            dashboardContainer.classList.add('hidden');
             loginError.textContent = '';
             registerError.textContent = '';
             registerSuccess.textContent = '';
@@ -467,12 +525,21 @@
             loginContainer.classList.add('hidden');
             registerContainer.classList.add('hidden');
             botContainer.classList.remove('hidden');
+            dashboardContainer.classList.add('hidden');
             loginError.textContent = '';
             registerError.textContent = '';
             registerSuccess.textContent = '';
             initializeSocket();
             // Non carichiamo i bot inizialmente
             botList.innerHTML = '';
+        }
+
+        function showDashboard() {
+            loginContainer.classList.add('hidden');
+            registerContainer.classList.add('hidden');
+            botContainer.classList.add('hidden');
+            dashboardContainer.classList.remove('hidden');
+            loadDashboardStats();
         }
 
         // Event listener per passare alla registrazione
@@ -486,6 +553,10 @@
             e.preventDefault();
             showLoginContainer();
         });
+
+        goManage.addEventListener('click', showBots);
+        goLogs.addEventListener('click', () => { window.location.href = '/logs'; });
+        goStats.addEventListener('click', () => { window.location.href = '/stats'; });
 
         // Gestione del login
         loginForm.addEventListener('submit', (e) => {
@@ -504,7 +575,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.message) {
-                    showBots();
+                    showDashboard();
                 } else if (data.error) {
                     loginError.textContent = data.error;
                 }
@@ -535,7 +606,7 @@
                     registerSuccess.textContent = data.message;
                     registerError.textContent = '';
                     // Effettua il login automaticamente dopo la registrazione
-                    showBots();
+                    showDashboard();
                 } else if (data.error) {
                     registerError.textContent = data.error;
                     registerSuccess.textContent = '';
@@ -549,25 +620,8 @@
         });
 
         // Gestione del logout
-        logoutButton.addEventListener('click', () => {
-            fetch('/api/logout', {
-                method: 'POST',
-                credentials: 'include',
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    if (socket) {
-                        socket.disconnect();
-                        socket = null;
-                    }
-                    showLoginContainer();
-                }
-            })
-            .catch(error => {
-                console.error('Errore nel logout:', error);
-            });
-        });
+        logoutButton.addEventListener('click', doLogout);
+        dashLogout.addEventListener('click', doLogout);
 
         // Gestione del cambio di categoria
         categorySelect.addEventListener('change', () => {
@@ -610,6 +664,7 @@
                     botActions.classList.add('bot-actions');
 
                     const startButton = document.createElement('button');
+                    const stopButton = document.createElement('button');
 
                     // Trova lo stato del bot
                     const botStatusObj = statuses.find(s => s.botName === bot);
@@ -631,7 +686,12 @@
                         }
                     });
 
+                    stopButton.textContent = 'Stop Bot';
+                    stopButton.classList.add('stop-button');
+                    stopButton.addEventListener('click', () => stopBot(bot));
+
                     botActions.appendChild(startButton);
+                    botActions.appendChild(stopButton);
 
                     botHeader.appendChild(botName);
                     botHeader.appendChild(botActions);
@@ -730,7 +790,7 @@
 
                 // Aggiorna il pulsante in base allo stato
                 const botItem = statusDiv.closest('.bot-item');
-                const startButton = botItem.querySelector('.bot-actions button');
+                const startButton = botItem.querySelector('.bot-actions .start-button, .bot-actions .restart-button');
                 if (status.toLowerCase() === 'in esecuzione') {
                     startButton.textContent = 'Riavvia Bot';
                     startButton.classList.remove('start-button');
@@ -805,6 +865,31 @@
             });
         }
 
+        // Funzione per fermare il bot
+        function stopBot(bot) {
+            if (!confirm(`Fermare il bot ${bot}?`)) return;
+            fetch('/api/stop-bot', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: bot, category: currentCategory }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                } else if (data.error) {
+                    alert(`Errore: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                console.error(`Errore nello stop del bot ${bot}:`, error);
+                alert('Errore nello stop del bot');
+            });
+        }
+
         // Funzione per inviare comandi al bot
         function sendCommand(bot) {
             const commandField = document.getElementById(`command-${bot}-${currentCategory}`);
@@ -825,9 +910,55 @@
             commandField.value = '';
         }
 
+        function doLogout() {
+            fetch('/api/logout', {
+                method: 'POST',
+                credentials: 'include',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    if (socket) {
+                        socket.disconnect();
+                        socket = null;
+                    }
+                    showLoginContainer();
+                }
+            })
+            .catch(error => {
+                console.error('Errore nel logout:', error);
+            });
+        }
+
+        function loadDashboardStats() {
+            fetch('/api/stats', { credentials: 'include' })
+                .then(r => r.json())
+                .then(data => {
+                    const offline = data.totalBots - data.runningBots;
+                    const ctx = document.getElementById('statusChart').getContext('2d');
+                    if (window.statusChart) {
+                        window.statusChart.data.datasets[0].data = [data.runningBots, offline];
+                        window.statusChart.update();
+                    } else {
+                        window.statusChart = new Chart(ctx, {
+                            type: 'pie',
+                            data: {
+                                labels: ['In esecuzione', 'Stop'],
+                                datasets: [{
+                                    data: [data.runningBots, offline],
+                                    backgroundColor: ['#4caf50', '#f44336']
+                                }]
+                            },
+                            options: { responsive: true }
+                        });
+                    }
+                })
+                .catch(err => console.error('Errore nel caricamento statistiche:', err));
+        }
+
         // Verifica se l'utente è già autenticato all'avvio
         window.onload = () => {
-            fetch('/api/bots', { credentials: 'include' })
+            fetch('/api/stats', { credentials: 'include' })
                 .then(response => {
                     if (response.status === 401) {
                         showLoginContainer();
@@ -836,13 +967,23 @@
                     return response.json();
                 })
                 .then(data => {
-                    showBots();
+                    showDashboard();
                 })
                 .catch(error => {
                     console.log('Utente non autenticato');
                     showLoginContainer();
                 });
         };
+
+        // Gestione tema
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        });
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark');
+        }
     </script>
 </body>
 </html>

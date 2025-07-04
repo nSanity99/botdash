@@ -18,6 +18,21 @@ const cors = require('cors'); // Aggiunto per gestire CORS
 const app = express();
 const port = 3000; // Usa la porta che preferisci
 
+// Funzione per registrare i log su file
+function logEvent(message) {
+    const logDir = path.join(__dirname, 'logs');
+    if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir);
+    }
+    const logPath = path.join(logDir, 'server.log');
+    const entry = `[${new Date().toISOString()}] ${message}\n`;
+    fs.appendFile(logPath, entry, (err) => {
+        if (err) {
+            console.error('Errore nella scrittura del log:', err);
+        }
+    });
+}
+
 // Creazione del server HTTP e dell'istanza di Socket.io
 const server = http.createServer(app);
 const io = socketIo(server);
@@ -339,10 +354,13 @@ app.post('/api/start-bot', isAuthenticated, (req, res) => {
         delete botProcesses[botKey];
         // Invia lo stato aggiornato del bot
         io.emit('status', { botName, status: 'Stop', category });
+        logEvent(`Bot ${botName} terminato con codice ${code}`);
     });
 
     // Invia lo stato aggiornato del bot
     io.emit('status', { botName, status: 'In esecuzione', category });
+
+    logEvent(`Bot ${botName} avviato`);
 
     res.json({ message: `Bot ${botName} avviato!`, pid: botProcess.pid });
 });
@@ -402,12 +420,77 @@ app.post('/api/restart-bot', isAuthenticated, (req, res) => {
         delete botProcesses[botKey];
         // Invia lo stato aggiornato del bot
         io.emit('status', { botName, status: 'Stop', category });
+        logEvent(`Bot ${botName} terminato con codice ${code}`);
     });
 
     // Invia lo stato aggiornato del bot
     io.emit('status', { botName, status: 'In esecuzione', category });
 
+    logEvent(`Bot ${botName} riavviato`);
+
     res.json({ message: `Bot ${botName} riavviato!`, pid: botProcess.pid });
+});
+
+// API per fermare un bot - Protetta
+app.post('/api/stop-bot', isAuthenticated, (req, res) => {
+    const { name, category } = req.body;
+    const botKey = `${category || 'nSanity'}:${name}`;
+
+    if (!botProcesses[botKey]) {
+        return res.status(400).json({ error: 'Il bot non è in esecuzione' });
+    }
+
+    try {
+        process.kill(botProcesses[botKey].process.pid, 'SIGTERM');
+        delete botProcesses[botKey];
+        io.emit('status', { botName: name, status: 'Stop', category });
+        logEvent(`Bot ${name} fermato`);
+        res.json({ message: `Bot ${name} fermato` });
+    } catch (error) {
+        console.error(`Errore nello stop del bot ${name}:`, error);
+        res.status(500).json({ error: 'Errore nello stop del bot' });
+    }
+});
+
+// API per recuperare i log
+app.get('/api/logs', isAuthenticated, (req, res) => {
+    const logPath = path.join(__dirname, 'logs', 'server.log');
+    fs.readFile(logPath, 'utf8', (err, data) => {
+        if (err) {
+            return res.status(500).json({ error: 'Errore nella lettura dei log' });
+        }
+        res.type('text/plain').send(data);
+    });
+});
+
+// API per statistiche base
+app.get('/api/stats', isAuthenticated, (req, res) => {
+    const categories = Object.keys(botDirectories);
+    let totalBots = 0;
+    let runningBots = 0;
+
+    categories.forEach((cat) => {
+        const botsDirectory = botDirectories[cat];
+        const files = fs.readdirSync(botsDirectory, { withFileTypes: true });
+        const botFolders = files.filter(f => f.isDirectory()).map(f => f.name);
+        totalBots += botFolders.length;
+        botFolders.forEach(b => {
+            const key = `${cat}:${b}`;
+            if (botProcesses[key]) runningBots += 1;
+        });
+    });
+
+    res.json({ totalBots, runningBots });
+});
+
+// Pagina log
+app.get('/logs', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'logs.html'));
+});
+
+// Pagina statistiche
+app.get('/stats', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'stats.html'));
 });
 
 // Serviamo la pagina HTML principale
