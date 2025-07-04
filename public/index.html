@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Bot</title>
+    <!-- Importazione dei Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Stili per un design minimalista, simmetrico e con animazioni */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            /* Aggiunta di animazione */
+            animation: slideDown 0.5s ease-out;
+        }
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            padding: 40px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            /* Aggiunta di animazione */
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 40px;
+            font-size: 2em;
+            font-weight: 700;
+        }
+        .bot-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .bot-item {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 30px;
+            padding: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+            transition: box-shadow 0.3s ease;
+            /* Aggiunta di animazione */
+            opacity: 0;
+            transform: translateY(20px);
+            animation: botItemFadeIn 0.5s forwards;
+            animation-delay: calc(0.1s * var(--i));
+        }
+        @keyframes botItemFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .bot-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .bot-name {
+            font-size: 1.5em;
+            font-weight: 500;
+            color: #333;
+        }
+        .bot-status {
+            margin-top: 20px;
+            font-weight: 500;
+            color: #666;
+        }
+        .bot-status.running {
+            color: #4caf50;
+        }
+        .bot-status.stopped {
+            color: #f44336;
+        }
+        .bot-actions button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid #2196f3;
+            border-radius: 4px;
+            background-color: #2196f3;
+            color: #fff;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-weight: 500;
+        }
+        .bot-actions button:hover {
+            background-color: #1976d2;
+            transform: translateY(-2px);
+        }
+        .start-button {
+            background-color: #4caf50;
+            border-color: #4caf50;
+        }
+        .start-button:hover {
+            background-color: #43a047;
+        }
+        .restart-button {
+            background-color: #ff9800;
+            border-color: #ff9800;
+        }
+        .restart-button:hover {
+            background-color: #fb8c00;
+        }
+        .logout-button {
+            padding: 12px 20px;
+            cursor: pointer;
+            background-color: #e0e0e0;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 100%;
+            margin-top: 40px;
+            font-size: 1em;
+            font-weight: 500;
+        }
+        .logout-button:hover {
+            background-color: #d5d5d5;
+            transform: translateY(-2px);
+        }
+        .hidden {
+            display: none;
+        }
+        /* Stili per i moduli */
+        form div {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 500;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1em;
+            margin: 0 auto;
+            transition: border-color 0.3s ease;
+        }
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: #2196f3;
+            outline: none;
+        }
+        button[type="submit"], button {
+            padding: 12px 20px;
+            cursor: pointer;
+            background-color: #2196f3;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-weight: 500;
+            width: 100%;
+            max-width: 200px;
+            font-size: 1em;
+            margin: 0 auto;
+            display: block;
+        }
+        button[type="submit"]:hover, button:hover {
+            background-color: #1976d2;
+            transform: translateY(-2px);
+        }
+        .toggle-link {
+            color: #2196f3;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .toggle-link:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            color: #f44336;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: 500;
+            /* Aggiunta di animazione */
+            animation: shake 0.3s;
+        }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        .success-message {
+            color: #4caf50;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: 500;
+            /* Aggiunta di animazione */
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        /* Stili per la console dei bot */
+        .bot-console {
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 15px;
+            border-radius: 4px;
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            font-size: 0.9em;
+            border: 1px solid #e0e0e0;
+            /* Aggiunta di animazione */
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .command-input {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .command-input input {
+            flex: 1;
+            max-width: 400px;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1em;
+            margin-right: 10px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        .command-input input:focus {
+            border-color: #2196f3;
+            outline: none;
+        }
+        .command-input button {
+            padding: 12px 20px;
+            background-color: #2196f3;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-weight: 500;
+            font-size: 1em;
+        }
+        .command-input button:hover {
+            background-color: #1976d2;
+            transform: translateY(-2px);
+        }
+        /* Stile per il selettore di categoria */
+        .category-selector {
+            margin-bottom: 40px;
+            text-align: center;
+            /* Aggiunta di animazione */
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .category-selector label {
+            font-weight: 500;
+            margin-right: 10px;
+            font-size: 1.1em;
+            color: #333;
+        }
+        .category-selector select {
+            padding: 10px 15px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        .category-selector select:focus {
+            border-color: #2196f3;
+            outline: none;
+        }
+        /* Stili per il testo dei link */
+        p {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+        /* Responsività */
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            .bot-name {
+                font-size: 1.3em;
+            }
+            button[type="submit"], button, .logout-button {
+                font-size: 0.9em;
+            }
+            .command-input {
+                flex-direction: column;
+            }
+            .command-input input {
+                margin-right: 0;
+                margin-bottom: 10px;
+                max-width: 100%;
+            }
+            .command-input button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header con il Titolo -->
+    <div class="header">
+        <h1>nSanity &amp; Chapo Bot Service</h1>
+    </div>
+
+    <div class="container">
+        <!-- Modulo di Login -->
+        <div id="loginContainer">
+            <h1>Login</h1>
+            <form id="loginForm">
+                <div>
+                    <label for="loginUsername">Username:</label>
+                    <input type="text" id="loginUsername" name="username" required>
+                </div>
+                <div>
+                    <label for="loginPassword">Password:</label>
+                    <input type="password" id="loginPassword" name="password" required>
+                </div>
+                <div>
+                    <button type="submit">Accedi</button>
+                </div>
+            </form>
+            <p>Non hai un account? <a class="toggle-link" id="showRegister">Registrati</a></p>
+            <div id="loginError" class="error-message"></div>
+        </div>
+
+        <!-- Modulo di Registrazione -->
+        <div id="registerContainer" class="hidden">
+            <h1>Registrazione</h1>
+            <form id="registerForm">
+                <div>
+                    <label for="registerUsername">Username:</label>
+                    <input type="text" id="registerUsername" name="username" required>
+                </div>
+                <div>
+                    <label for="registerPassword">Password:</label>
+                    <input type="password" id="registerPassword" name="password" required>
+                </div>
+                <div>
+                    <button type="submit">Registrati</button>
+                </div>
+            </form>
+            <p>Hai già un account? <a class="toggle-link" id="showLogin">Accedi</a></p>
+            <div id="registerError" class="error-message"></div>
+            <div id="registerSuccess" class="success-message"></div>
+        </div>
+
+        <!-- Sezione dei Bot -->
+        <div id="botContainer" class="hidden">
+            <h1>Gestione dei Bot</h1>
+
+            <!-- Selettore di Categoria -->
+            <div class="category-selector">
+                <label for="categorySelect">Seleziona Categoria:</label>
+                <select id="categorySelect">
+                    <option value="">Seleziona una categoria</option>
+                    <option value="nSanity">nSanity</option>
+                    <option value="Chapo">Chapo</option>
+                </select>
+            </div>
+
+            <ul class="bot-list" id="botList">
+                <!-- Lista dei bot verrà popolata dinamicamente -->
+            </ul>
+            <button class="logout-button" id="logoutButton">Logout</button>
+        </div>
+    </div>
+
+    <!-- Importiamo Socket.io client -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const loginContainer = document.getElementById('loginContainer');
+        const registerContainer = document.getElementById('registerContainer');
+        const botContainer = document.getElementById('botContainer');
+
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+
+        const loginError = document.getElementById('loginError');
+        const registerError = document.getElementById('registerError');
+        const registerSuccess = document.getElementById('registerSuccess');
+
+        const botList = document.getElementById('botList');
+        const logoutButton = document.getElementById('logoutButton');
+
+        const showRegister = document.getElementById('showRegister');
+        const showLogin = document.getElementById('showLogin');
+
+        // Elementi per il selettore di categoria
+        const categorySelect = document.getElementById('categorySelect');
+
+        let socket; // Variabile globale per il socket
+        let currentCategory = ''; // Categoria corrente selezionata
+
+        // Funzioni per mostrare/nascondere i contenitori
+        function showLoginContainer() {
+            loginContainer.classList.remove('hidden');
+            registerContainer.classList.add('hidden');
+            botContainer.classList.add('hidden');
+            loginError.textContent = '';
+            registerError.textContent = '';
+            registerSuccess.textContent = '';
+        }
+
+        function showRegisterContainer() {
+            loginContainer.classList.add('hidden');
+            registerContainer.classList.remove('hidden');
+            botContainer.classList.add('hidden');
+            loginError.textContent = '';
+            registerError.textContent = '';
+            registerSuccess.textContent = '';
+        }
+
+        function showBots() {
+            loginContainer.classList.add('hidden');
+            registerContainer.classList.add('hidden');
+            botContainer.classList.remove('hidden');
+            loginError.textContent = '';
+            registerError.textContent = '';
+            registerSuccess.textContent = '';
+            initializeSocket();
+            // Non carichiamo i bot inizialmente
+            botList.innerHTML = '';
+        }
+
+        // Event listener per passare alla registrazione
+        showRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            showRegisterContainer();
+        });
+
+        // Event listener per tornare al login
+        showLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            showLoginContainer();
+        });
+
+        // Gestione del login
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            fetch('/api/login', {
+                method: 'POST',
+                credentials: 'include', // Importante per inviare cookie e credenziali
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    showBots();
+                } else if (data.error) {
+                    loginError.textContent = data.error;
+                }
+            })
+            .catch(error => {
+                console.error('Errore nel login:', error);
+                loginError.textContent = 'Errore nel login';
+            });
+        });
+
+        // Gestione della registrazione
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('registerUsername').value.trim();
+            const password = document.getElementById('registerPassword').value;
+
+            fetch('/api/register', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    registerSuccess.textContent = data.message;
+                    registerError.textContent = '';
+                    // Effettua il login automaticamente dopo la registrazione
+                    showBots();
+                } else if (data.error) {
+                    registerError.textContent = data.error;
+                    registerSuccess.textContent = '';
+                }
+            })
+            .catch(error => {
+                console.error('Errore nella registrazione:', error);
+                registerError.textContent = 'Errore nella registrazione';
+                registerSuccess.textContent = '';
+            });
+        });
+
+        // Gestione del logout
+        logoutButton.addEventListener('click', () => {
+            fetch('/api/logout', {
+                method: 'POST',
+                credentials: 'include',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    if (socket) {
+                        socket.disconnect();
+                        socket = null;
+                    }
+                    showLoginContainer();
+                }
+            })
+            .catch(error => {
+                console.error('Errore nel logout:', error);
+            });
+        });
+
+        // Gestione del cambio di categoria
+        categorySelect.addEventListener('change', () => {
+            currentCategory = categorySelect.value;
+            if (currentCategory !== '') {
+                loadBots();
+            } else {
+                botList.innerHTML = ''; // Svuota la lista se nessuna categoria è selezionata
+            }
+        });
+
+        // Funzione per caricare la lista dei bot e il loro stato
+        function loadBots() {
+            Promise.all([
+                fetch(`/api/bots?category=${currentCategory}`, { credentials: 'include' }),
+                fetch(`/api/bot-status?category=${currentCategory}`, { credentials: 'include' })
+            ])
+            .then(async ([botsResponse, statusResponse]) => {
+                if (botsResponse.status === 401 || statusResponse.status === 401) {
+                    showLoginContainer();
+                    throw new Error('Non autenticato');
+                }
+
+                const bots = await botsResponse.json();
+                const statuses = await statusResponse.json();
+
+                botList.innerHTML = '';
+                bots.forEach(bot => {
+                    const li = document.createElement('li');
+                    li.classList.add('bot-item');
+
+                    const botHeader = document.createElement('div');
+                    botHeader.classList.add('bot-header');
+
+                    const botName = document.createElement('span');
+                    botName.classList.add('bot-name');
+                    botName.textContent = bot;
+
+                    const botActions = document.createElement('div');
+                    botActions.classList.add('bot-actions');
+
+                    const startButton = document.createElement('button');
+
+                    // Trova lo stato del bot
+                    const botStatusObj = statuses.find(s => s.botName === bot);
+                    if (botStatusObj && botStatusObj.status.toLowerCase() === 'in esecuzione') {
+                        startButton.textContent = 'Riavvia Bot';
+                        startButton.classList.add('restart-button');
+                        startButton.style.backgroundColor = '#ffc107';
+                    } else {
+                        startButton.textContent = 'Avvia Bot';
+                        startButton.classList.add('start-button');
+                        startButton.style.backgroundColor = '#28a745';
+                    }
+
+                    startButton.addEventListener('click', () => {
+                        if (startButton.classList.contains('start-button')) {
+                            startBot(bot, startButton);
+                        } else {
+                            restartBot(bot);
+                        }
+                    });
+
+                    botActions.appendChild(startButton);
+
+                    botHeader.appendChild(botName);
+                    botHeader.appendChild(botActions);
+
+                    li.appendChild(botHeader);
+
+                    // Sezione stato
+                    const statusDiv = document.createElement('div');
+                    statusDiv.classList.add('bot-status');
+                    statusDiv.id = `status-${bot}-${currentCategory}`;
+                    if (botStatusObj) {
+                        statusDiv.textContent = `Stato: ${botStatusObj.status}`;
+                        if (botStatusObj.status.toLowerCase() === 'in esecuzione') {
+                            statusDiv.classList.add('running');
+                        } else {
+                            statusDiv.classList.add('stopped');
+                        }
+                    } else {
+                        statusDiv.textContent = 'Stato: Stop';
+                        statusDiv.classList.add('stopped');
+                    }
+
+                    li.appendChild(statusDiv);
+
+                    // Sezione console
+                    const botConsole = document.createElement('div');
+                    botConsole.classList.add('bot-console');
+                    botConsole.id = `console-${bot}-${currentCategory}`;
+                    botConsole.textContent = ''; // Inizializza vuoto
+
+                    // Input comando
+                    const commandInput = document.createElement('div');
+                    commandInput.classList.add('command-input');
+
+                    const commandField = document.createElement('input');
+                    commandField.type = 'text';
+                    commandField.placeholder = 'Inserisci comando...';
+                    commandField.id = `command-${bot}-${currentCategory}`;
+
+                    const sendButton = document.createElement('button');
+                    sendButton.textContent = 'Invia';
+
+                    sendButton.addEventListener('click', () => sendCommand(bot));
+
+                    commandInput.appendChild(commandField);
+                    commandInput.appendChild(sendButton);
+
+                    li.appendChild(botConsole);
+                    li.appendChild(commandInput);
+
+                    botList.appendChild(li);
+                });
+            })
+            .catch(error => {
+                console.error('Errore nel caricamento dei bot:', error);
+            });
+        }
+
+        // Funzione per inizializzare Socket.io
+        function initializeSocket() {
+            if (socket && socket.connected) {
+                socket.disconnect();
+            }
+            socket = io({
+                withCredentials: true
+            });
+
+            socket.on('connect', () => {
+                console.log('Connesso a Socket.io');
+            });
+
+            // Ascolta l'evento 'output' per aggiornare la console
+            socket.on('output', ({ botName, data, category }) => {
+                if (category !== currentCategory) return;
+                const consoleDiv = document.getElementById(`console-${botName}-${currentCategory}`);
+                if (consoleDiv) {
+                    consoleDiv.textContent += data;
+                    consoleDiv.scrollTop = consoleDiv.scrollHeight;
+                }
+            });
+
+            // Ascolta l'evento 'status' per aggiornare lo stato del bot
+            socket.on('status', ({ botName, status, category }) => {
+                if (category !== currentCategory) return;
+                const statusDiv = document.getElementById(`status-${botName}-${currentCategory}`);
+                if (statusDiv) {
+                    statusDiv.textContent = `Stato: ${status}`;
+                    if (status.toLowerCase() === 'in esecuzione') {
+                        statusDiv.classList.remove('stopped');
+                        statusDiv.classList.add('running');
+                    } else {
+                        statusDiv.classList.remove('running');
+                        statusDiv.classList.add('stopped');
+                    }
+                }
+
+                // Aggiorna il pulsante in base allo stato
+                const botItem = statusDiv.closest('.bot-item');
+                const startButton = botItem.querySelector('.bot-actions button');
+                if (status.toLowerCase() === 'in esecuzione') {
+                    startButton.textContent = 'Riavvia Bot';
+                    startButton.classList.remove('start-button');
+                    startButton.classList.add('restart-button');
+                    startButton.style.backgroundColor = '#ffc107';
+                    startButton.onclick = () => restartBot(botName);
+                } else {
+                    startButton.textContent = 'Avvia Bot';
+                    startButton.classList.remove('restart-button');
+                    startButton.classList.add('start-button');
+                    startButton.style.backgroundColor = '#28a745';
+                    startButton.onclick = () => startBot(botName, startButton);
+                }
+            });
+
+            socket.on('disconnect', () => {
+                console.log('Disconnesso da Socket.io');
+            });
+        }
+
+        // Funzione per avviare il bot
+        function startBot(bot, button) {
+            fetch('/api/start-bot', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: bot, category: currentCategory }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                    // Lo stato verrà aggiornato tramite l'evento 'status'
+                } else if (data.error) {
+                    alert(`Errore: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                console.error(`Errore nell'avvio del bot ${bot}:`, error);
+                alert('Errore nell\'avvio del bot');
+            });
+        }
+
+        // Funzione per riavviare il bot
+        function restartBot(bot) {
+            if (!confirm(`Sei sicuro di voler riavviare il bot ${bot}?`)) {
+                return;
+            }
+
+            fetch('/api/restart-bot', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: bot, category: currentCategory }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                    // Lo stato verrà aggiornato tramite l'evento 'status'
+                } else if (data.error) {
+                    alert(`Errore: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                console.error(`Errore nel riavvio del bot ${bot}:`, error);
+                alert('Errore nel riavvio del bot');
+            });
+        }
+
+        // Funzione per inviare comandi al bot
+        function sendCommand(bot) {
+            const commandField = document.getElementById(`command-${bot}-${currentCategory}`);
+            const command = commandField.value.trim();
+            if (command === '') return;
+
+            // Invia il comando tramite Socket.io
+            socket.emit('command', { botName: bot, command, category: currentCategory });
+
+            // Aggiungi il comando alla console
+            const consoleDiv = document.getElementById(`console-${bot}-${currentCategory}`);
+            if (consoleDiv) {
+                consoleDiv.textContent += `> ${command}\n`;
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            }
+
+            // Pulisci il campo di input
+            commandField.value = '';
+        }
+
+        // Verifica se l'utente è già autenticato all'avvio
+        window.onload = () => {
+            fetch('/api/bots', { credentials: 'include' })
+                .then(response => {
+                    if (response.status === 401) {
+                        showLoginContainer();
+                        throw new Error('Non autenticato');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    showBots();
+                })
+                .catch(error => {
+                    console.log('Utente non autenticato');
+                    showLoginContainer();
+                });
+        };
+    </script>
+</body>
+</html>

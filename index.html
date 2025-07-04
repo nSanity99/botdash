@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Bot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .bot-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .bot-list li {
+            margin: 10px 0;
+            cursor: pointer;
+            padding: 10px;
+            border: 1px solid #ddd;
+            transition: background-color 0.3s ease;
+        }
+        .bot-list li:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gestione dei Bot</h1>
+    <ul class="bot-list" id="botList"></ul>
+
+    <script>
+        // Chiediamo al server la lista dei bot e la mostriamo
+        fetch('/api/bots')
+            .then(response => response.json())
+            .then(data => {
+                const botList = document.getElementById('botList');
+                data.forEach(bot => {
+                    const li = document.createElement('li');
+                    li.textContent = bot;
+                    li.onclick = () => startBot(bot);
+                    botList.appendChild(li);
+                });
+            });
+
+        // Funzione per startare il bot
+        function startBot(bot) {
+            fetch(`/api/start-bot?name=${bot}`)
+                .then(response => {
+                    if (response.ok) {
+                        alert(`Bot ${bot} avviato!`);
+                    } else {
+                        alert(`Errore nell'avvio del bot ${bot}`);
+                    }
+                });
+        }
+    </script>
+</body>
+</html>
